@@ -1,0 +1,78 @@
+# https://kubernetes.io/docs/api-reference/v1.6/#deployment-v1beta1-apps
+# defines apiVersion as apps/v1beta
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: crate
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: crate
+        tier: backend
+    spec:
+      volumes:
+      - name: nfs-data
+        nfs:
+          # use "kubectl describe services nfs-server" to discover your NFS ClusterIP
+          server: YOUR_NFS_CLUSTER_IP
+          path: /crate/data
+      containers:
+      - name: crate
+        image: crate:2.0.2
+        command:
+          - /docker-entrypoint.sh
+          - -Ccluster.name=${CLUSTER_NAME}        
+          - -Cnetwork.bind_host=_site_
+          - -Cnetwork.publish_host=_site_
+          - -Cdiscovery.type=srv
+          - -Cdiscovery.zen.minimum_master_nodes=2
+          - -Cgateway.recover_after_time=5m
+          - -Clicense.enterprise=false
+          - -Cgateway.recover_after_nodes=2
+          - -Cgateway.expected_nodes=${EXPECTED_NODES}
+          - -Cdiscovery.srv.query=_cluster._tcp.crate.default.svc.cluster.local
+          - -Cnode.max_local_storage_nodes=50
+        resources:
+          requests:
+            cpu: 100m        
+            memory: 500Mi
+          limits:
+            memory: 1Gi            
+        env:
+        - name: GET_HOSTS_FROM
+          value: dnsdiscovery.type
+          # If your cluster config does not include a dns service, then to
+          # instead access environment variables to find service host
+          # info, comment out the 'value: dns' line above, and uncomment the
+          # line below:
+          # value: env
+        # Half the availabdiscovery.typele memory.
+        - name: CRATE_HEAP_SIZE
+          value: "500m"
+        - name: EXPECTED_NODES        
+          value: "3"
+        - name: CLUSTER_NAME
+          value: "tutorial-cluster-1"
+        ports:
+        - containerPort: 4200
+          name: crate-web
+        - containerPort: 4300
+          name: cluster
+        - containerPort: 5432
+          name: cratejdbc
+        # These volume mounts are persistent. They are like inline claims,
+        # but not exactly because the names need to match exactly one of
+        # the stateful pod volumes.
+        volumeMounts:
+        - name: nfs-data
+          mountPath: /data
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: cloud.google.com/gke-preemptible
+                operator: DoesNotExist
+        
