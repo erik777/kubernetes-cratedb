@@ -31,7 +31,9 @@ This means that you can start with 3 nodes.  Then, with a single kubectl command
 
 ## Dependencies
 
-To use this configuration provided, you need to setup an [nfs-server](https://github.com/erik777/kubernetes-nfs-server) in your cluster, which is very easy to do. 
+### Persistent Volume
+
+With CrateDB, you will want your data to be on a persistent volume that survives the life-cycle of your Crate pods.  To use the CrateDB configuration provided, you need to setup an [nfs-server](https://github.com/erik777/kubernetes-nfs-server) in your cluster, which is very easy to do. 
 
 You can remove the NFS mount from the crate-deployment.yaml, and the cluster will still run.  But, then each node will be using the root volume of the pod to store its data, meaning that when the pod is deleted, that node's data will be gone.  Of course, since this is a clustered solution that replicates the data across Crate nodes, as long as you maintain [the minimum # of nodes for a Crate cluster to function](https://crate.io/docs/reference/architecture/shared_nothing.html#components-of-a-crate-node), to your DB client, the data will still be there.  But, when you delete your crate deployment, the data will be completely gone.   
 
@@ -42,6 +44,14 @@ You will also need to know the ClusterIP address of your nfs-server, as K8S curr
 Your initial folders you mount in your pod must also exist on your NFS volume before you create the Crate pods.  Otherwise, K8S will not deploy the pods, and you will see something like an rcpbind error in your monitoring.
 
 Presuming your NFS server exports the root of a volume that is mounted to /exports, you will need to create the folder /exports/crate/data in your nfs-server, or just /crate/data in the root of the volume, so it can mount /crate/data in your crate pods. 
+
+### vm.max_map_count
+
+CrateDB requires vm.max_map_count to be at least 262166.  You will get an error if it is less.  Your K8S nodes could have this set to a lower value.  You can either change to a node image that has this set to 262166, or, you can run a DaemonSet that automatically sets it when a new K8S node is created.  
+
+To do the latter, use the provided init-daemonset.yaml:
+
+    kubectl create -f init-daemonset.yaml
 
 ## Creating your CrateDB cluster
 
@@ -126,5 +136,7 @@ If you just created a play deployment, have some fun and try an update.  If you 
 
 ## Possible next steps
 
-Try with a newer cluster file systems such as GlusterFS instead of NFS and see what the performance impact is, and how it behaves when a FS node goes down.  
+* Try with a newer cluster file systems such as GlusterFS instead of NFS and see what the performance impact is, and how it behaves when a FS node goes down.  
+
+* Ensure rolling upgrade meets [CrateDB requirements](https://crate.io/docs/reference/best_practice/rolling_upgrade.html#rolling-upgrade) for a graceful stop.  
 
