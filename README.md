@@ -45,9 +45,9 @@ Your initial folders you mount in your pod must also exist on your NFS volume be
 
 Presuming your NFS server exports the root of a volume that is mounted to /exports, you will need to create the folder /exports/crate/data in your nfs-server, or just /crate/data in the root of the volume, so it can mount /crate/data in your crate pods. 
 
-### vm.max_map_count
+### vm.max\_map\_count
 
-CrateDB requires vm.max_map_count to be at least 262166.  You will get an error if it is less.  Your K8S nodes could have this set to a lower value.  You can either change to a node image that has this set to 262166, or, you can run a DaemonSet that automatically sets it when a new K8S node is created.  
+CrateDB requires [vm.max_map_count to be at least 262166](https://crate.io/docs/reference/en/latest/configuration.html#virtual-memory).  You will get an error on startup if it is less.  Your K8S nodes could have this set to a lower value.  Options include changing the image used to create nodes to use 262166, manually changing a node after it is created, or, you can run a DaemonSet that automatically sets it when a new K8S node is created.  
 
 To do the latter, use the provided init-daemonset.yaml:
 
