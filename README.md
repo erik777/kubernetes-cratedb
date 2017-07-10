@@ -1,7 +1,7 @@
 # kubernetes-cratedb
 YAML for deploying a [CrateDB](https://crate.io/) cluster in [Kubernetes](https://kubernetes.io/) (K8S). 
 
-Presumption is you have a working K8S cluster are comfortable deploying pods in K8S with kubectl and using related tools for monitoring.  
+Presumption is you have a working K8S cluster are comfortable deploying pods with kubectl and using related tools for monitoring.  
 
 This is currently for Kubernetes 1.6 and has been tested on [Google Container Engine (GKE)](https://cloud.google.com/container-engine/). 
 
@@ -13,7 +13,9 @@ Kubernetes calls each VM or machine your pods run on a "node".  In a CrateDB clu
 
 [CrateDB](https://crate.io/) is a masterless horizontally scalable database that supports SQL while also supporting JSON documents.  Masterless means that "all nodes in a CrateDB cluster are identical, allowing simple and elastic scaling with high availability and replication." [source: crate.io](https://crate.io/overview/crate-vs-other-databases/)  
 
-The elastic scaling capability makes it a good back-end database for microservices in a highly elastic environment like Kubernetes.  You can also do rolling updates of CrateDB with K8S. 
+The elastic scaling capability makes it a good back-end database for microservices in a highly elastic platform like Kubernetes.  You can also do rolling updates of your CrateDB cluster with K8S. 
+
+CrateDB was originally a fork of elasticsearch, and uses its libraries today within it.  Yet, CrateDB added [interesting new capabilities](https://crate.io/a/how-is-crate-data-different-than-elasticsearch/).
 
 ## Data Volumes
 
@@ -23,11 +25,11 @@ There are two approaches to defining the volumes for the nodes.  Either you crea
 
     node.max_local_storage_nodes=50
 
-While Kubernetes 1.6 supports dynamic provisioning of persistent volumes, it currently does not have a way to dynamically provision a distinct volume for each replica in a deployment.   On top of that, in GKE and other cloud providers, multiple pods cannot write to the same volume.  
+While Kubernetes 1.6 supports dynamic provisioning of persistent volumes, it currently does not have a way to dynamically provision a distinct volume for each replica in a deployment.   On top of that, in GKE and other cloud providers, multiple pods cannot write to the same provisioned persistent volume.  
 
 Fortunately, there are options such as NFS where your pods can all write to the same volume.  Combined with CrateDB's ability to support multiple Crate nodes on a single volume, you can achieve dynamic elasticity.  
 
-This means that you can start with 3 nodes.  Then, with a single kubectl command, scale to 5 nodes, and CrateDB will handle it.  Kubernetes provides the ultimately platform for leveraging the scaling capabilities of CrateDB. 
+This means that you can start with 3 nodes.  Then, with a single kubectl command, scale to 5 nodes, and CrateDB will handle it.  Kubernetes provides the ultimate platform for leveraging the scaling capabilities of CrateDB. 
 
 ## Dependencies
 
@@ -35,15 +37,16 @@ This means that you can start with 3 nodes.  Then, with a single kubectl command
 
 With CrateDB, you will want your data to be on a persistent volume that survives the life-cycle of your Crate pods.  To use the CrateDB configuration provided, you need to setup an [nfs-server](https://github.com/erik777/kubernetes-nfs-server) in your cluster, which is very easy to do. 
 
-You can remove the NFS mount from the crate-deployment.yaml, and the cluster will still run.  But, then each node will be using the root volume of the pod to store its data, meaning that when the pod is deleted, that node's data will be gone.  Of course, since this is a clustered solution that replicates the data across Crate nodes, as long as you maintain [the minimum # of nodes for a Crate cluster to function](https://crate.io/docs/reference/architecture/shared_nothing.html#components-of-a-crate-node), to your DB client, the data will still be there.  But, when you delete your crate deployment, the data will be completely gone.   
+You can remove the NFS mount from the crate-deployment.yaml, and the cluster will run just fine.  But, then each node will be using the root volume of the pod to store its data, meaning that when the pod is deleted, that node's data will be gone.  Of course, since this is a clustered solution that replicates the data across Crate nodes, it is possible to [lose a node without losing data](https://crate.io/docs/reference/best_practice/rolling_upgrade.html#rolling-upgrade).  
+ But, when you delete your crate deployment, the data will be completely gone.   
 
-You will also need to know the ClusterIP address of your nfs-server, as K8S currently does not support discovery or name resolution in the declaration of your pod used by "kubectl create".  Somewhere in the documentation they said they plan to change this so you won't need to put the IP in your YAML in the future.  Until then...
+You will need to know the ClusterIP address of your nfs-server, as K8S currently does not support discovery or name resolution in the declaration of your pod used by "kubectl create".  Somewhere in the documentation they said they plan to change this so you won't need to put the IP in your YAML in the future.  Until then...
 
     kubectl describe services nfs-server
 
 Your initial folders you mount in your pod must also exist on your NFS volume before you create the Crate pods.  Otherwise, K8S will not deploy the pods, and you will see something like an rcpbind error in your monitoring.
 
-Presuming your NFS server exports the root of a volume that is mounted to /exports, you will need to create the folder /exports/crate/data in your nfs-server, or just /crate/data in the root of the volume, so it can mount /crate/data in your crate pods. 
+Presuming your NFS server exports the root of a volume that is mounted to /exports, you will need to create the folder /exports/crate/data in your nfs-server, or just /crate/data in the root of the volume mounted to /exports, so it can mount /crate/data in your crate pods. 
 
 ### vm.max\_map\_count
 
@@ -135,6 +138,8 @@ Always check Crate release notes before updating a live database.
 If you just created a play deployment, have some fun and try an update.  If you are on the latest, you can delete your crate deployment, clear your /crate/data contents, change your YAML to the prior version, re-create, then do an update when that is up and running.  The latest version available is in [Docker Hub](https://hub.docker.com/_/crate/).
 
 ## Possible next steps
+
+* Add health checks.
 
 * Try with a newer cluster file systems such as GlusterFS instead of NFS and see what the performance impact is, and how it behaves when a FS node goes down.  
 
