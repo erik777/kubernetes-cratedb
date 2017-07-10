@@ -1,7 +1,7 @@
 # kubernetes-cratedb
 YAML for deploying a [CrateDB](https://crate.io/) cluster in [Kubernetes](https://kubernetes.io/) (K8S). 
 
-Presumption is you have a working K8S cluster are comfortable deploying pods with kubectl and using related tools for monitoring.  
+Presumption is you have a working K8S cluster and are comfortable deploying pods with kubectl and using related tools for monitoring.  
 
 This is currently for Kubernetes 1.6 and has been tested on [Google Container Engine (GKE)](https://cloud.google.com/container-engine/). 
 
@@ -15,7 +15,7 @@ Kubernetes calls each VM or machine your pods run on a "node".  In a CrateDB clu
 
 The elastic scaling capability makes it a good back-end database for microservices in a highly elastic platform like Kubernetes.  You can also do rolling updates of your CrateDB cluster with K8S. 
 
-CrateDB was originally a fork of elasticsearch, and uses its libraries today within it.  Yet, CrateDB added [interesting new capabilities](https://crate.io/a/how-is-crate-data-different-than-elasticsearch/).
+CrateDB was originally a fork of Elasticsearch, and uses its libraries today within it.  Yet, CrateDB added [interesting new capabilities](https://crate.io/a/how-is-crate-data-different-than-elasticsearch/).
 
 ## Data Volumes
 
