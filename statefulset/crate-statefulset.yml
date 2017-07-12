@@ -1,0 +1,75 @@
+apiVersion: "apps/v1beta1"
+kind: StatefulSet
+metadata:
+  name: crate
+spec:
+  serviceName: "crate"
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: crate
+      annotations:
+        pod.beta.kubernetes.io/init-containers: '[
+          {
+          "name": "sysctl",
+            "image": "busybox",
+            "imagePullPolicy": "IfNotPresent",
+            "command": ["sysctl", "-w", "vm.max_map_count=262144"],
+            "securityContext": {
+              "privileged": true
+            }
+          }
+        ]'
+    spec:
+      containers:
+      - name: crate
+        image: crate:2.0.2
+        command:
+          - /docker-entrypoint.sh
+          - -Ccluster.name=${CLUSTER_NAME}
+#          - -Cnetwork.host=0.0.0.0
+          - -Cnetwork.bind_host=0.0.0.0
+          - -Cnetwork.publish_host=_site_
+          - -Cdiscovery.type=srv
+          - -Cdiscovery.srv.query=_cluster._tcp.crate-discovery.default.svc.cluster.local
+          - -Cdiscovery.zen.minimum_master_nodes=2
+          - -Cgateway.recover_after_time=5m
+          - -Cgateway.recover_after_nodes=2
+          - -Cgateway.expected_nodes=${EXPECTED_NODES}
+          - -Clicense.enterprise=false
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        resources:
+          requests:
+            cpu: 100m        
+            memory: 500Mi
+          limits:
+            memory: 1Gi            
+        ports:
+        - containerPort: 4200
+          name: db
+        - containerPort: 4300
+          name: cluster
+        - containerPort: 5432
+          name: pg
+        env:
+        # Half the available memory.
+        - name: CRATE_HEAP_SIZE
+          value: "500m"
+        - name: EXPECTED_NODES
+          value: "3"
+        - name: CLUSTER_NAME
+          value: "crate-cluster"
+      terminationGracePeriodSeconds: 10
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        annotations:
+          volume.beta.kubernetes.io/storage-class: crate-storage
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi

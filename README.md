@@ -17,6 +17,10 @@ The elastic scaling capability makes it a good back-end database for microservic
 
 CrateDB was originally a fork of Elasticsearch, and uses its libraries today within it.  Yet, CrateDB added [interesting new capabilities](https://crate.io/a/how-is-crate-data-different-than-elasticsearch/).
 
+## Kubernetes Deployment Options
+
+[StatefulSet](statefulset)
+
 ## Data Volumes
 
 Each node in the CrateDB cluster has its own data volume, which, simply put, is a folder where CrateDB creates the physical database.  It is then up to the Crate nodes in the cluster to coordinate replication and other cluster behaviors, providing fail-over and performance capabilities.     
@@ -143,5 +147,5 @@ If you just created a play deployment, have some fun and try an update.  If you 
 
 * Try with a newer cluster file systems such as GlusterFS instead of NFS and see what the performance impact is, and how it behaves when a FS node goes down.  
 
-* Ensure rolling upgrade meets [CrateDB requirements](https://crate.io/docs/reference/best_practice/rolling_upgrade.html#rolling-upgrade) for a graceful stop.  
+* Ensure rolling upgrade meets [CrateDB requirements](https://crate.io/docs/reference/best_practice/rolling_upgrade.html#rolling-upgrade) for a graceful stop.  [K8S Life-cycle hooks starter](https://pracucci.com/graceful-shutdown-of-kubernetes-pods.html). Refer to [K8S Volume Examples](https://github.com/kubernetes/kubernetes/tree/master/examples/volumes).  
 

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: crate-discovery
+  labels:
+    app: crate
+spec:
+#  type: LoadBalancer
+  ports:
+  - port: 4200
+    name: crate-web
+  - port: 4300
+    name: cluster
+  - port: 5432
+    name: pg
+  selector:
+    app: crate
