@@ -23,8 +23,9 @@ spec:
         ]'
     spec:
       containers:
+      # Identify latest at https://hub.docker.com/_/crate/
       - name: crate
-        image: crate:2.0.2
+        image: crate:2.0.5
         command:
           - /docker-entrypoint.sh
           - -Ccluster.name=${CLUSTER_NAME}
