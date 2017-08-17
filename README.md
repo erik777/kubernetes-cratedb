@@ -43,7 +43,12 @@ If the CrateDB pods form a cluster, the node count will be 3.  There are many wa
 
 If you are using GKE or another provider that supports the LoadBalancer service type, uncomment that line from the crate-service.yaml and re-create it.  This will put it on the public Internet.  While not a great idea for a real database you plan to use, it will allow you to view the UI at port 4200 with your web browser.  
 
-If you terminal to a K8S node containing a Crate pod, you can use docker exec to /bin/sh into the crate node.  From there, if you ls /data/data/nodes, you should see 3 folders for the 3 nodes: 0, 1 and 2.  
+If you terminal to a K8S node containing a Crate pod, you can use docker exec to /bin/sh into the crate node.  From there, if you ls /data/data/nodes, you should see 3 folders for the 3 nodes: 0, 1 and 2.
+
+Another approach is to create a port-forward rule to the pod, then you can view the console in your browser, or use `crash` to query if you have it on your local machine.  
+
+    kubectl get pods
+    kubecl port-forward crate-0 4200  
 
 Another way to confirm is to use Crate's SQL client tool called "crash" to query the number of nodes.  If you use **docker exec** to **/bin/sh** into one of the crate pods, you can do the following:
 

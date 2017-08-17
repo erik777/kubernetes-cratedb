@@ -24,7 +24,18 @@ To do a complete removal, delete the services, too.  However, if are just deleti
 
 ## Scaling your cluster
 
-TODO
+[Scale a StatefulSet](https://kubernetes.io/docs/tasks/run-application/scale-stateful-set/)
+
+	kubectl scale statefulsets <stateful-set-name> --replicas=<new-replicas>
+
+## Discovery
+
+This is configured primarily through these two parameters for Kubernetes:
+
+	- -Cdiscovery.type=srv
+	- -Cdiscovery.srv.query=_cluster._tcp.crate-service.default.svc.cluster.local
+
+In this, `crate-service` is the service name, as defined in `crate-service.yml`.
 
 ## Rolling update
 
